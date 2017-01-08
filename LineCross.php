@@ -103,6 +103,7 @@ class LineCross {
         $this->LineService = new Service($this->ServiceInfo, $this->AuthInfo, $this->Connections->LineService);
         $this->PollService = new Poll($this->ServiceInfo, $this->AuthInfo, $this->Connections->LinePollService);
     }
+
     public function LoginWithQR() {
         $this->Connections->LineTalkService->transport = new THttpClient($this->ServiceInfo->Host->Host, 443, $this->ServiceInfo->EndPoint->TalkService, 'https');
         $this->Connections->LineTalkService->transport->addHeaders(["User-Agent" => $this->ServiceInfo->AppType->UA, "X-Line-Application" => $this->ServiceInfo->AppType->APP, ]);
@@ -172,7 +173,9 @@ class Service {
     public $client;
     public function __construct($ServiceInfo, $AuthInfo, $Connection) {
         $Connection->transport = new THttpClient($ServiceInfo->Host->Host, 443, $ServiceInfo->EndPoint->LineService, 'https');
-        $Connection->transport->addHeaders(["User-Agent" => $ServiceInfo->AppType->UA, "X-Line-Application" => $ServiceInfo->AppType->APP, 'X-Line-Access' => $AuthInfo->Token, ]);
+        $Connection->transport->addHeaders(["User-Agent" => $ServiceInfo->AppType->UA, 
+            "X-Line-Application" => $ServiceInfo->AppType->APP,
+            'X-Line-Access' => $AuthInfo->Token, ]);
         $Connection->protocol = new TCompactProtocol($Connection->transport);
         $Connection->client = new LineServiceClient($Connection->protocol);
         $this->client = $Connection->client;
@@ -270,14 +273,16 @@ class Service {
 }
 class Poll {
     public $client;
+    public $AuthInfo;
     public function __construct($ServiceInfo, $AuthInfo, $Connection) {
+        $this->AuthInfo = $AuthInfo;
         $Connection->transport = new THttpClient($ServiceInfo->Host->Host, 443, $ServiceInfo->EndPoint->PollService, 'https');
         $Connection->transport->addHeaders(array("User-Agent" => $ServiceInfo->AppType->UA, "X-Line-Application" => $ServiceInfo->AppType->APP, 'X-Line-Access' => $AuthInfo->Token,));
         $Connection->protocol = new TCompactProtocol($Connection->transport);
         $Connection->client = new LinePollServiceClient($Connection->protocol);
-        $client = $Connection->client;
+        $this->client = $Connection->client;
     }
     public function start($count = 1) {
-        return $Connection->client->fetchOperations($AuthInfo->Rev, $count);
+        return $this->client->fetchOperations($this->AuthInfo->Rev, $count);
     }
 }
