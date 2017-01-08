@@ -101,6 +101,7 @@ class LineCross {
             $this->LoginWhithMailPass();
         }
         $this->LineService = new Service($this->ServiceInfo, $this->AuthInfo, $this->Connections->LineService);
+        $this->PollService = new Poll($this->ServiceInfo, $this->AuthInfo, $this->Connections->LinePollService);
     }
     public function LoginWithQR() {
         $this->Connections->LineTalkService->transport = new THttpClient($this->ServiceInfo->Host->Host, 443, $this->ServiceInfo->EndPoint->TalkService, 'https');
@@ -175,6 +176,9 @@ class Service {
         $Connection->protocol = new TCompactProtocol($Connection->transport);
         $Connection->client = new LineServiceClient($Connection->protocol);
         $this->client = $Connection->client;
+        if(empty($AuthInfo->Rev)){
+            $AuthInfo->Rev = $Connection->client->getLastOpRevision();
+        }
     }
     public function getGroupIdsInvited() {
         return $this->client->getGroupIdsInvited();
@@ -268,10 +272,9 @@ class Poll {
     public $client;
     public function __construct($ServiceInfo, $AuthInfo, $Connection) {
         $Connection->transport = new THttpClient($ServiceInfo->Host->Host, 443, $ServiceInfo->EndPoint->PollService, 'https');
-        $Connection->transport->addHeaders(array("User-Agent" => $ServiceInfo->AuthInfo->UA, "X-Line-Application" => $ServiceInfo->AuthInfo->App, 'X-Line-Access' => $Line->authToken,));
-        $Connection->protocol = new TCompactProtocol($this->transport);
-        $Connection->client = new LinePollServiceClient($this->protocol);
-        $AuthInfo->Rev = $Connection->client->getLastOpRevision();
+        $Connection->transport->addHeaders(array("User-Agent" => $ServiceInfo->AppType->UA, "X-Line-Application" => $ServiceInfo->AppType->APP, 'X-Line-Access' => $AuthInfo->Token,));
+        $Connection->protocol = new TCompactProtocol($Connection->transport);
+        $Connection->client = new LinePollServiceClient($Connection->protocol);
         $client = $Connection->client;
     }
     public function start($count = 1) {
