@@ -97,7 +97,7 @@ class LineCross {
         if (empty($AuthInfo)) {
             $this->AuthInfo = new AuthInfo();
             $this->LoginWithQR();
-        } elseif (!empty($Mail)) {
+        } elseif (!empty($AuthInfo->Mail) && !empty($AuthInfo->Pass) ) {
             $this->LoginWhithMailPass();
         }
         $this->LineService = new Service($this->ServiceInfo, $this->AuthInfo, $this->Connections->LineService);
